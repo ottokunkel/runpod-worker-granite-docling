@@ -24,7 +24,7 @@ SERVER_URL = f"http://{LLAMA_HOST}:{LLAMA_PORT}"
 def start_llama_server():
     """Start llama-server and block until it reports healthy."""
     cmd = [
-        "llama-server",
+        "/app/llama-server",
         "-m", MODEL_PATH,
         "--mmproj", MMPROJ_PATH,
         "-ngl", GPU_LAYERS,

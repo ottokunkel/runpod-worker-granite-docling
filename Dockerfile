@@ -1,22 +1,4 @@
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS builder
-
-RUN apt-get update && \
-    apt-get install -y git cmake build-essential libcurl4-openssl-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN git clone https://github.com/ggml-org/llama.cpp.git /llama.cpp
-WORKDIR /llama.cpp
-RUN cmake -B build \
-      -DGGML_CUDA=ON \
-      -DLLAMA_CURL=ON \
-      -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --config Release -j$(nproc)
-
-# ---------------------------------------------------------------------------
-
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
-
-COPY --from=builder /llama.cpp/build/bin/ /usr/local/bin/
+FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
 RUN apt-get update && \
     apt-get install -y python3 python3-pip curl && \
@@ -30,7 +12,7 @@ RUN mkdir -p /models && \
       "https://huggingface.co/ggml-org/granite-docling-258M-GGUF/resolve/main/mmproj-granite-docling-258M-Q8_0.gguf"
 
 COPY requirements.txt /requirements.txt
-RUN pip3 install --no-cache-dir -r /requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r /requirements.txt
 
 COPY handler.py /handler.py
 
