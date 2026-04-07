@@ -1,0 +1,8 @@
+{
+  "input": {
+    "image_url": "https://huggingface.co/ibm-granite/granite-docling-258M/resolve/main/assets/new_arxiv.png",
+    "prompt": "Convert this page to markdown.",
+    "max_tokens": 8192,
+    "temperature": 0.0
+  }
+}
