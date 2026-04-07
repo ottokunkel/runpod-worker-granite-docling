@@ -22,4 +22,7 @@ ENV LLAMA_HOST=127.0.0.1
 ENV LLAMA_PORT=8080
 ENV GPU_LAYERS=99
 
-CMD ["python3", "-u", "/handler.py"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
