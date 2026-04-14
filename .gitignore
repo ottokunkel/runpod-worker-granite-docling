@@ -3,3 +3,8 @@ __pycache__/
 .venv/
 .env
 *.gguf
+.pytest_cache/
+.benchmarks/
+models/
+llama-server.log
+thoughts/
