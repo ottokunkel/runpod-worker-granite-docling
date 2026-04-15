@@ -33,7 +33,9 @@ fi
 # check if $LLAMA_SERVER_CMD_ARGS is set
 if [ -z "$LLAMA_SERVER_CMD_ARGS" ]; then
     echo "start.sh: LLAMA_SERVER_CMD_ARGS is not set. Defaulting to the baked granite-docling model with mmproj."
-    LLAMA_SERVER_CMD_ARGS="--model /models/granite-docling.gguf --mmproj /models/mmproj.gguf --n-gpu-layers 999 --ctx-size 8192"
+    LLAMA_PARALLEL="${LLAMA_PARALLEL:-16}"
+    LLAMA_CTX_SIZE="${LLAMA_CTX_SIZE:-131072}"
+    LLAMA_SERVER_CMD_ARGS="--model /models/granite-docling.gguf --mmproj /models/mmproj.gguf --n-gpu-layers 999 --parallel ${LLAMA_PARALLEL} --ctx-size ${LLAMA_CTX_SIZE} --cont-batching --metrics --threads 4 --threads-batch 8"
 fi
 
 # check if the substring --port is in LLAMA_SERVER_CMD_ARGS and if yes, raise an error:

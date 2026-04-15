@@ -2,6 +2,8 @@
 FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
 ENV PYTHONUNBUFFERED=1
+ENV LLAMA_PARALLEL=16
+ENV LLAMA_CTX_SIZE=131072
 
 # Set up the working directory
 WORKDIR /

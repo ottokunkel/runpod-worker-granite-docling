@@ -11,8 +11,9 @@ import os
 from utils import JobInput
 from engine import LlamaCPPEngine, LlamaCPPOpenAIEngine
 
-# set max concurrency from environment variable or default
-DEFAULT_MAX_CONCURRENCY = 8
+# Default handler concurrency mirrors the llama-server --parallel slot count
+# so RunPod's async worker ceiling matches the inference backend's batch width.
+DEFAULT_MAX_CONCURRENCY = int(os.getenv("LLAMA_PARALLEL", 16))
 
 max_concurrency = int(os.getenv("MAX_CONCURRENCY", DEFAULT_MAX_CONCURRENCY))
 
