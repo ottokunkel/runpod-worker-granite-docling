@@ -1,93 +1,35 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/ggml-org/llama.cpp/master/media/llama1-icon-transparent.png" alt="llama.cpp logo" width="96">
+    <img src="https://raw.githubusercontent.com/ggml-org/llama.cpp/master/media/llama1-icon-transparent.png" alt="llama.cpp logo" width="128">
 </p>
 
-# runpod-worker-granite-docling
+# Serverless llama.cpp inference worker for RunPod
 
-RunPod serverless worker for IBM's [granite-docling-258M](https://huggingface.co/ggml-org/granite-docling-258M-GGUF)
-vision model, running via `llama-server` (llama.cpp). Exposes an
-OpenAI-compatible chat-completions endpoint that accepts a document image
-and returns structured output (markdown, HTML, or DocTags).
+This repository contains a serverless inference worker for running llama.cpp models on RunPod. It uses the `llama-server` image to provide an API for interacting with the models.
+The following OpenAI API endpoints are supported:
 
-Architecture follows [Jacob-ML/inference-worker](https://github.com/Jacob-ML/inference-worker):
-`start.sh` boots `llama-server` on port `3098`, waits for it to listen,
-then runs an async RunPod handler that forwards requests through the
-OpenAI SDK to the local server. Streaming is supported.
+- `v1/models`
+- `v1/chat/completions`
+- `v1/completions`
 
-## API
+Streaming responses is also supported.
 
-The worker accepts two job-input shapes:
+**Important!** This project is still relatively new. Please [open a new issue](https://github.com/Jacob-ML/inference-worker/issues/new) if you encounter any problems in order to get help.
 
-**OpenAI-wrapped (what RunPod's `/openai/v1/...` routes deliver):**
-```json
-{
-    "input": {
-        "openai_route": "/v1/chat/completions",
-        "openai_input": {
-            "model": "granite-docling",
-            "messages": [{"role": "user", "content": [...]}],
-            "max_tokens": 512,
-            "stream": false
-        }
-    }
-}
-```
+**This is a fork of [SvenBrnn's `runpod-worker-ollama`](https://github.com/SvenBrnn/runpod-worker-ollama).**
 
-**Raw (for direct `/run` / `/runsync` calls):**
-```json
-{
-    "input": {
-        "messages": [{"role": "user", "content": [...]}],
-        "stream": false
-    }
-}
-```
+## Setup
 
-For image transcription, `content` is an array of
-`{"type": "image_url", "image_url": {"url": "..."}}` followed by
-`{"type": "text", "text": "Convert this page to markdown."}`.
-
-## Usage — OpenAI SDK against a deployed endpoint
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://api.runpod.ai/v2/<endpoint-id>/openai/v1",
-    api_key="<your-runpod-api-key>",
-)
-resp = client.chat.completions.create(
-    model="granite-docling",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "image_url", "image_url": {"url": "https://…/page.png"}},
-            {"type": "text",      "text": "Convert this page to markdown."},
-        ],
-    }],
-)
-print(resp.choices[0].message.content)
-```
+To get the best performance out of this worker, it is recommended to use cached models. Please see the [cached models documentation](./docs/cached.md) for more information, this is **highly recommended and will save many resources**.
 
 ## Configuration
 
-Set via environment variables on the RunPod endpoint:
+The worker can be configured via environment variables set in the RunPod hub configuration:
 
-| Var | Default | Description |
-| --- | --- | --- |
-| `LLAMA_SERVER_CMD_ARGS` | *(baked-in granite-docling F16 + GB10-tuned flags)* | Full `llama-server` argv. Do **not** set `--port` — 3098 is fixed. |
-| `MAX_CONCURRENCY` | `8` | Max concurrent in-flight requests per worker. |
+- `LLAMA_SERVER_CMD_ARGS`: Command line arguments (argv) for the `llama-server` binary. Example: `-hf /path/to/model.gguf:Q4_K_M --ctx-size 4096`. **IMPORTANT**: Please do not define the port argument here, as the worker will always use port `3098` automatically.
+- `MAX_CONCURRENCY`: Maximum number of concurrent requests the worker can handle. Default is `8`.
 
-## Build & Deploy
+## License
 
-```bash
-docker build -t runpod-worker-granite-docling .
-# push to your registry, then create a RunPod Serverless endpoint from the image.
-```
+Please see the [LICENSE](./LICENSE) file for more information.
 
-## Model
-
-- **granite-docling-258M** — 258M-parameter multimodal model (IBM Research, Apache-2.0)
-- Baked in as F16 GGUF + multimodal projector (~700 MB total)
-- Capabilities: full-page OCR, layout detection, tables, charts, equations/code
-- Tuned for Blackwell-class GPUs with `-b 2048 -ub 512 --flash-attn on --parallel 1`
+[![Runpod badge](https://api.runpod.io/badge/Jacob-ML/inference-worker)](https://console.runpod.io/hub/Jacob-ML/inference-worker)

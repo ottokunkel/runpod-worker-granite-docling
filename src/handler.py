@@ -1,27 +1,45 @@
-"""RunPod async handler — routes each job to the right engine and streams
-results back. Follows the Jacob-ML/inference-worker pattern."""
+"""
+Runpod handler for processing jobs using LlamaCPP or OpenAI engines. This
+module defines an asynchronous handler function that receives job inputs,
+instantiates the appropriate engine based on the job input, and yields
+generated output in a streaming fashion.
+"""
 
-import os
-
+from typing import Any
 import runpod
-
-from engine import LlamaCPPEngine, LlamaCPPOpenAIEngine
+import os
 from utils import JobInput
+from engine import LlamaCPPEngine, LlamaCPPOpenAIEngine
 
-MAX_CONCURRENCY = int(os.getenv("MAX_CONCURRENCY", "8"))
+# set max concurrency from environment variable or default
+DEFAULT_MAX_CONCURRENCY = 8
+
+max_concurrency = int(os.getenv("MAX_CONCURRENCY", DEFAULT_MAX_CONCURRENCY))
 
 
-async def handler(job):
+async def handler(job: Any):
+    """
+    Asynchronous handler function for processing jobs. It receives a job
+    dictionary, extracts the input, determines the appropriate engine to use
+    (LlamaCPP or OpenAI), and yields generated output in a streaming manner.
+    """
+
     job_input = JobInput(job["input"])
-    engine = (
-        LlamaCPPOpenAIEngine() if job_input.openai_route else LlamaCPPEngine()
+    engine_class = (
+        LlamaCPPOpenAIEngine if job_input.openai_route else LlamaCPPEngine
     )
-    async for batch in engine.generate(job_input):
+    engine = engine_class()
+
+    job = engine.generate(job_input)
+
+    async for batch in job:
         yield batch
 
 
-runpod.serverless.start({
-    "handler": handler,
-    "concurrency_modifier": lambda _x: MAX_CONCURRENCY,
-    "return_aggregate_stream": True,
-})
+runpod.serverless.start(
+    {
+        "handler": handler,
+        "concurrency_modifier": lambda _x: max_concurrency,
+        "return_aggregate_stream": True,
+    }
+)

@@ -1,27 +1,5 @@
 {
     "input": {
-        "openai_route": "/v1/chat/completions",
-        "openai_input": {
-            "model": "granite-docling",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": "https://huggingface.co/ibm-granite/granite-docling-258M/resolve/main/assets/new_arxiv.png"
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": "Convert this page to markdown."
-                        }
-                    ]
-                }
-            ],
-            "max_tokens": 512,
-            "temperature": 0.0
-        }
+        "prompt": "How are you?"
     }
 }
